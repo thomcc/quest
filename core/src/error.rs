@@ -37,6 +37,12 @@ impl From<!> for Error {
 	}
 }
 
+impl From<std::convert::Infallible> for Error {
+	fn from(_: std::convert::Infallible) -> Self {
+		unsafe { std::hint::unreachable_unchecked() }
+	}
+}
+
 #[deprecated]
 impl From<crate::types::Text> for Error {
 	fn from(err: crate::types::Text) -> Self { Error::Messaged(err.into()) }

@@ -1,6 +1,8 @@
 use crate::{Object, Args};
 use crate::types::{Number, Text};
 use std::fmt::{self, Debug, Display, Formatter};
+use crate::attrs::operators::*;
+use crate::attrs::conversion::*;
 
 /// The Boolean type within Quest.
 ///
@@ -165,119 +167,10 @@ impl std::ops::Not for Boolean {
 
 
 impl Boolean {
-	/// Convert this into a [`Number`].
-	///
-	/// This is simply a wrapper around [`Number::from(Boolean)`](Number#impl-From<Boolean>).
-	#[inline]
-	pub fn qs_at_num(&self, _: Args) -> Result<Number, !> {
-		Ok(Number::from(*self))
-	}
-
-	/// Convert this into a [`Text`].
-	///
-	/// This is simply a wrapper around [`Text::from(Boolean)`](Number#impl-From<Boolean>).
-	#[inline]
-	pub fn qs_at_text(&self, _: Args) -> Result<Text, !> {
-		Ok(Text::from(*self))
-	}
-
-	/// Convert this into a [`Boolean`].
-	///
-	/// This is simply a wrapper around [`Boolean::from(Boolean)`](Boolean#impl-From<Boolean>).
-	#[inline]
-	pub fn qs_at_bool(&self, _: Args) -> Result<Boolean, !> {
-		Ok(Boolean::from(*self))
-	}
-
-	/// Clones this.
-	#[inline]
-	pub fn qs_clone(&self, _: Args) -> Result<Boolean, !> {
-		Ok(self.clone())
-	}
-
-	/// See if a this is equal to the first argument.
-	///
-	/// Unlike most methods, the first argument is not implicitly converted to a  [`Boolean`] first.
-	pub fn qs_eql(&self, args: Args) -> Result<bool, crate::error::KeyError> {
-		match args.arg(0)?.downcast_ref::<Boolean>() {
-			Some(val) if *self == *val => Ok(true),
-			_ => Ok(false)
-		}
-	}
-
-	/// Compares this to the first argument.
-	///
-	/// The first argument is converted to a [`Boolean`] if it isn't already.
-	pub fn qs_cmp(&self, args: Args) -> crate::Result<std::cmp::Ordering> {
-		let rhs = args.arg(0)?.downcast_call::<Boolean>()?;
-
-		Ok(self.cmp(&rhs))
-	}
-
 	/// Logical NOT of this.
 	#[inline]
 	pub fn qs_not(&self, _: Args) -> Result<Boolean, !> {
 		Ok(!*self)
-	}
-
-	/// Logical AND of this and the first argument.
-	///
-	/// The first argument is converted to a [`Boolean`] if it isn't already.
-	pub fn qs_bitand(&self, args: Args) -> crate::Result<Boolean> {
-		let rhs = args.arg(0)?.downcast_call::<Boolean>()?;
-
-		Ok(*self & rhs)
-	}
-
-	/// In-place logical AND of this and the first argument.
-	///
-	/// The first argument is converted to a [`Boolean`] if it isn't already.
-	pub fn qs_bitand_assign(this: &Object, args: Args) -> crate::Result<Object> {
-		let rhs = args.arg(0)?.downcast_call::<Boolean>()?;
-
-		*this.try_downcast_mut::<Boolean>()? &= rhs;
-
-		Ok(this.clone())
-	}
-
-	/// Logical OR of this and the first argument.
-	///
-	/// The first argument is converted to a [`Boolean`] if it isn't already.
-	pub fn qs_bitor(&self, args: Args) -> crate::Result<Boolean> {
-		let rhs = args.arg(0)?.downcast_call::<Boolean>()?;
-
-		Ok(*self | rhs)
-	}
-
-	/// In-place logical OR of this and the first argument.
-	///
-	/// The first argument is converted to a [`Boolean`] if it isn't already.
-	pub fn qs_bitor_assign(this: &Object, args: Args) -> crate::Result<Object> {
-		let rhs = args.arg(0)?.downcast_call::<Boolean>()?;
-
-		*this.try_downcast_mut::<Boolean>()? |= rhs;
-
-		Ok(this.clone())
-	}
-
-	/// Logical XOR of this and the first argument.
-	///
-	/// The first argument is converted to a [`Boolean`] if it isn't already.
-	pub fn qs_bitxor(&self, args: Args) -> crate::Result<Boolean> {
-		let rhs = args.arg(0)?.downcast_call::<Boolean>()?;
-
-		Ok(*self ^ rhs)
-	}
-
-	/// In-place logical XOR of this and the first argument.
-	///
-	/// The first argument is converted to a [`Boolean`] if it isn't already.
-	pub fn qs_bitxor_assign(this: &Object, args: Args) -> crate::Result<Object> {
-		let rhs = args.arg(0)?.downcast_call::<Boolean>()?;
-
-		*this.try_downcast_mut::<Boolean>()? ^= rhs;
-
-		Ok(this.clone())
 	}
 
 	/// The hash for this.
@@ -297,11 +190,11 @@ for Boolean [(parents super::Basic) (convert "@bool")]:
 	"=="    => method Boolean::qs_eql,
 	"!"     => method Boolean::qs_not,
 	"&"     => method Boolean::qs_bitand,
-	"&="    => method Boolean::qs_bitand_assign,
+	"&="    => function Boolean::qs_bitand_assign,
 	"|"     => method Boolean::qs_bitor,
-	"|="    => method Boolean::qs_bitor_assign,
+	"|="    => function Boolean::qs_bitor_assign,
 	"^"     => method Boolean::qs_bitxor,
-	"^="    => method Boolean::qs_bitxor_assign,
+	"^="    => function Boolean::qs_bitxor_assign,
 	"<=>"   => method Boolean::qs_cmp,
 	"hash"  => method Boolean::qs_hash,
 }

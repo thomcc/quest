@@ -7,8 +7,9 @@ mod error;
 
 pub mod obj;
 pub mod types;
-pub mod literals;
+pub mod attrs;
 
 pub use obj::{Object, ToObject};
 pub use error::{Error, Result};
 pub use types::rustfn::{ArgsOld, Args, Binding};
+pub use attrs::literals;
