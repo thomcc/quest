@@ -23,6 +23,7 @@ pub fn init() {
 }
 
 pub mod utils;
+pub mod attrs;
 pub mod obj;
 pub mod types;
 pub mod literals;

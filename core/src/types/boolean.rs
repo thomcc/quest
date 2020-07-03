@@ -1,6 +1,7 @@
 use crate::{Object, Result, Args};
 use crate::types::{Number, Text};
 use std::fmt::{self, Debug, Display, Formatter};
+use crate::attrs::{convert};
 
 /// The Boolean type within Quest.
 ///
@@ -171,36 +172,6 @@ impl std::ops::Not for Boolean {
 }
 
 impl Boolean {
-	/// Inspect the boolean.
-	#[allow(non_snake_case)]
-	pub fn qs___inspect__(this: &Object, _: Args) -> Result<Text> {
-		this.try_with_ref::<Self, _, !, _>(|bool| Ok(format!("{:?}", bool).into()))
-	}
-
-	/// Convert this into a [`Number`].
-	///
-	/// This is simply a wrapper around [`Number::from(Boolean)`](Number#impl-From<Boolean>).
-	#[inline]
-	pub fn qs_at_num(this: &Object, _: Args) -> Result<Number> {
-		this.try_with_ref::<Self, _, !, _>(|bool| Ok(Number::from(*bool)))
-	}
-
-	/// Convert this into a [`Text`].
-	///
-	/// This is simply a wrapper around [`Text::from(Boolean)`](Number#impl-From<Boolean>).
-	#[inline]
-	pub fn qs_at_text(this: &Object, _: Args) -> Result<Text> {
-		this.try_with_ref::<Self, _, !, _>(|bool| Ok(Text::from(*bool)))
-	}
-
-	/// Convert this into a [`Boolean`].
-	///
-	/// This is simply a wrapper around [`Boolean::clone`](#method.clone).
-	#[inline]
-	pub fn qs_at_bool(this: &Object, _: Args) -> Result<Object> {
-		Ok(this.clone())
-	}
-
 	/// See if a this is equal to the first argument.
 	///
 	/// Unlike most methods, the first argument is not implicitly converted to a  [`Boolean`] first.
@@ -304,6 +275,51 @@ impl Boolean {
 	}
 }
 
+impl convert::Inspect for Boolean {
+	/// Inspect the boolean.
+	#[inline]
+	fn call(this: &Object, _: Args) -> Result<Text> {
+		this.try_with_ref::<Self, _, !, _>(|this| Ok(format!("{:?}", this).into()))
+	}
+}
+
+impl convert::AtBoolean for Boolean {
+	/// Convert this into a [`Boolean`].
+	///
+	/// This is simply a wrapper around [`Boolean::clone`](#method.clone).
+	#[inline]
+	fn call(this: &Object, _: Args) -> Result<Boolean> {
+		this.try_with_ref::<Self, _, !, _>(|this| Ok(this.clone()))
+	}
+}
+
+impl convert::AtNumber for Boolean {
+	/// Convert this into a [`Number`].
+	///
+	/// This is simply a wrapper around [`Number::from(Boolean)`](Number#impl-From<Boolean>).
+	#[inline]
+	fn call(this: &Object, _: Args) -> Result<Number> {
+		this.try_with_ref::<Self, _, !, _>(|this| Ok(Number::from(*this)))
+	}
+}
+
+impl convert::AtText for Boolean {
+	/// Convert this into a [`Text`].
+	///
+	/// This is simply a wrapper around [`Text::from(Boolean)`](Number#impl-From<Boolean>).
+	#[inline]
+	fn call(this: &Object, _: Args) -> Result<Text> {
+		this.try_with_ref::<Self, _, !, _>(|bool| Ok(Text::from(*bool)))
+	}
+}
+
+	// /// Convert this into a [`Boolean`].
+	// ///
+	// /// This is simply a wrapper around [`Boolean::clone`](#method.clone).
+	// #[inline]
+	// pub fn qs_at_bool(this: &Object, _: Args) -> Result<Object> {
+	// 	Ok(this.clone())
+	// }
 
 impl_object_type!{
 for Boolean {
@@ -324,11 +340,12 @@ for Boolean {
 		}
 	}
 }
+
 [(parents super::Basic) (convert "@bool")]:
-	"@text" => function Boolean::qs_at_text,
-	"__inspect__" => function Boolean::qs___inspect__,
-	"@num"  => function Boolean::qs_at_num,
-	"@bool" => function Boolean::qs_at_bool,
+	"__inspect__" => function <Boolean as self::convert::Inspect>::call,
+	"@text" => function <Boolean as self::convert::AtText>::call,
+	"@num"  => function <Boolean as self::convert::AtNumber>::call,
+	"@bool" => function <Boolean as self::convert::AtBoolean>::call,
 	"=="    => function Boolean::qs_eql,
 	"!"     => method_old Boolean::qs_not,
 	"&"     => method_old Boolean::qs_bitand,
@@ -344,26 +361,24 @@ for Boolean {
 #[cfg(test)]
 mod tests {
 	use super::*;
-
+	use crate::attrs::convert::*;
 
 	#[test]
 	fn at_num() {
-		assert_eq!(Boolean::qs_at_num(&true.into(), args!()).unwrap(), Number::ONE);
-		assert_eq!(Boolean::qs_at_num(&false.into(), args!()).unwrap(), Number::ZERO);
+		assert_eq!(<Boolean as AtNumber>::call(&true.into(), args!()).unwrap(), Number::ONE);
+		assert_eq!(<Boolean as AtNumber>::call(&false.into(), args!()).unwrap(), Number::ZERO);
 	}
 
 	#[test]
 	fn at_text() {
-		assert_eq!(Boolean::qs_at_text(&Object::from(Boolean::TRUE), args!()).unwrap(), Text::from("true"));
-		assert_eq!(Boolean::qs_at_text(&Object::from(Boolean::FALSE), args!()).unwrap(), Text::from("false"));
+		assert_eq!(<Boolean as AtText>::call(&true.into(), args!()).unwrap(), Text::from("true"));
+		assert_eq!(<Boolean as AtText>::call(&false.into(), args!()).unwrap(), Text::from("false"));
 	}
 
 	#[test]
 	fn at_bool() {
-		assert_eq!(*Boolean::qs_at_bool(&true.into(), args!()).unwrap().downcast_ref::<Boolean>().unwrap(),
-				Boolean::TRUE);
-		assert_eq!(*Boolean::qs_at_bool(&false.into(), args!()).unwrap().downcast_ref::<Boolean>().unwrap(),
-				Boolean::FALSE);
+		assert_eq!(<Boolean as AtBoolean>::call(&true.into(), args!()).unwrap(), Boolean::TRUE);
+		assert_eq!(<Boolean as AtBoolean>::call(&false.into(), args!()).unwrap(), Boolean::FALSE);
 	}
 
 	#[test]

@@ -169,6 +169,8 @@ macro_rules! impl_object_type {
 				use std::sync::{Once, atomic::{AtomicU8, Ordering}};
 				#[allow(unused)]
 				use $crate::{Object, literals};
+				#[allow(unused)]
+				use $crate::attrs::*;
 
 				static mut CLASS_OBJECT: MaybeUninit<Object> = MaybeUninit::uninit();
 				static mut HAS_SETUP_HAPPENED: AtomicU8 = AtomicU8::new(0);

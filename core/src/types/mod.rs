@@ -10,6 +10,12 @@ pub trait ObjectType : Debug + Any + Send + Sync + Clone {
 	fn mapping() -> Object;
 
 	#[inline]
+	fn init() {
+		#[allow(unused)]
+		Self::mapping();
+	}
+
+	#[inline]
 	fn new_object(self) -> Object where Self: Sized {
 		Object::new_with_parent(self, vec![Self::mapping()])
 	}
