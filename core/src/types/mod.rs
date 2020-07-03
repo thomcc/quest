@@ -37,11 +37,11 @@ pub mod rustfn;
 pub mod scope;
 
 pub mod null;
-pub mod boolean;
+mod boolean;
 pub mod number;
 pub mod text;
 
-pub mod list;
+mod list;
 
 pub use convert::Convertible;
 pub use comparable::Comparable;

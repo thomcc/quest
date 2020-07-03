@@ -190,15 +190,20 @@ impl Object {
 		self.0.data.with_ref_unchecked(f)
 	}
 
-	pub fn try_with_mut<T, O, F>(&self, f: F) -> crate::Result<O>
+	pub fn try_with_mut<T, O, E, F>(&self, f: F) -> crate::Result<O>
 	where
 		T: Any,
-		F: FnOnce(&mut T) -> crate::Result<O>
+		E: Into<crate::Error>,
+		F: FnOnce(&mut T) -> Result<O, E>,
 	{
 		self.with_mut(|opt|
-			opt.ok_or_else(||
-					TypeError::WrongType { expected: type_name::<T>(), got: self.typename() }.into())
-				.and_then(f)
+			match opt {
+				Some(opt) => f(opt).map_err(Into::into),		
+				None => Err(TypeError::WrongType {
+					expected: type_name::<T>(),
+					got: self.typename()
+				}.into())
+			}
 		)
 	}
 

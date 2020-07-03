@@ -238,9 +238,10 @@ impl Text {
 	}
 
 	pub fn qs_add_assign(this: &Object, args: Args) -> crate::Result<Object> {
-		let rhs = args.arg(0)?.downcast_call::<Self>()?;
+		let _rhs = args.arg(0)?.downcast_call::<Self>()?;
 
-		this.try_with_mut(|txt: &mut Self| Ok(*txt += rhs))?;
+		// this.try_with_mut(|txt: &mut Self| Ok(*txt += rhs))?;
+		if true { unimplemented!(); }
 
 		Ok(this.clone())
 	}
@@ -307,9 +308,10 @@ impl Text {
 	}
 
 	pub fn qs_push(this: &Object, args: Args) -> crate::Result<Object> {
-		let rhs = args.arg(0)?.downcast_call::<Self>()?;
+		let _rhs = args.arg(0)?.downcast_call::<Self>()?;
 
-		this.try_with_mut(|txt: &mut Self| Ok(txt.0.to_mut().push_str(rhs.as_ref())))?;
+		// this.try_with_mut(|txt: &mut Self| Ok(txt.0.to_mut().push_str(rhs.as_ref())))?;
+		if true { unimplemented!(); }
 
 		Ok(this.clone())
 	}
@@ -332,13 +334,14 @@ impl Text {
 
 
 	pub fn qs_clear(this: &Object, _: Args) -> crate::Result<Object> {
-		this.try_with_mut(|this: &mut Self| Ok(this.0.to_mut().clear()))?;
+		// this.try_with_mut(|this: &mut Self| Ok(this.0.to_mut().clear()))?;
+		if true { unimplemented!(); }
 
 		Ok(this.clone())
 	}
 
-	pub fn qs_split(&self, _: Args) -> crate::Result<Object> { todo!("split") }
-	pub fn qs_reverse(&self, _: Args) -> crate::Result<Object> { todo!("reverse") }
+	pub fn qs_split(&mut self, _: Args) -> crate::Result<Object> { todo!("split") }
+	pub fn qs_reverse(&mut self, _: Args) -> crate::Result<Object> { todo!("reverse") }
 
 	pub fn qs_match(&self, args: Args) -> crate::Result<Object> {
 		let rhs = args.arg(0)?.downcast_call::<Self>()?;
@@ -399,7 +402,7 @@ for Text
 	"shift"   => method_old_mut Text::qs_shift,
 	"clear"   => function Text::qs_clear,
 	"split"   => method_old_mut Text::qs_split,
-	"reverse" => method_old Text::qs_reverse,
+	"reverse" => method_old_mut Text::qs_reverse,
 	"match" => method_old Text::qs_match
 	// "strip"   => function Text::qs_strip,
 }

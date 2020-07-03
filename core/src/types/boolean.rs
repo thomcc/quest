@@ -1,7 +1,7 @@
 use crate::{Object, Result, Args};
 use crate::types::{Number, Text};
 use std::fmt::{self, Debug, Display, Formatter};
-use crate::attrs::{convert};
+use crate::attrs::{convert, operators, misc};
 
 /// The Boolean type within Quest.
 ///
@@ -114,7 +114,7 @@ impl From<Boolean> for Text {
 	}
 }
 
-impl std::ops::BitAnd for Boolean {
+/*impl std::ops::BitAnd for Boolean {
 	type Output = Self;
 
 	#[inline]
@@ -170,7 +170,7 @@ impl std::ops::Not for Boolean {
 		Self::from(!self.0)
 	}
 }
-
+*//*
 impl Boolean {
 	/// See if a this is equal to the first argument.
 	///
@@ -243,42 +243,29 @@ impl Boolean {
 	pub fn qs_bitor_assign(this: &Object, args: Args) -> Result<Object> {
 		let rhs = args.arg(0)?.downcast_call::<Boolean>()?;
 
-		this.try_with_mut(|bool: &mut Self| Ok(*bool |= rhs))?;
+		this.try_with_mut::<Self, _, !, _>(|bool: &mut Self| Ok(*bool |= rhs))?;
 
 		Ok(this.clone())
 	}
 
-	/// Logical XOR of this and the first argument.
-	///
-	/// The first argument is converted to a [`Boolean`] if it isn't already.
 	pub fn qs_bitxor(&self, args: Args) -> Result<Boolean> {
 		let rhs = args.arg(0)?.downcast_call::<Boolean>()?;
 
 		Ok(*self ^ rhs)
 	}
 
-	/// In-place logical XOR of this and the first argument.
-	///
-	/// The first argument is converted to a [`Boolean`] if it isn't already.
-	pub fn qs_bitxor_assign(this: &Object, args: Args) -> Result<Object> {
-		let rhs = args.arg(0)?.downcast_call::<Boolean>()?;
-
-		this.try_with_mut(|bool: &mut Self| Ok(*bool ^= rhs))?;
-
-		Ok(this.clone())
-	}
 
 	/// The hash for this.
 	#[inline]
 	pub fn qs_hash(&self, _args: Args) -> Result<Object> {
 		todo!("hash for Boolean")
 	}
-}
+}*/
 
 impl convert::Inspect for Boolean {
 	/// Inspect the boolean.
 	#[inline]
-	fn call(this: &Object, _: Args) -> Result<Text> {
+	fn call(this: &Object, _: Args) -> Result<Object> {
 		this.try_with_ref::<Self, _, !, _>(|this| Ok(format!("{:?}", this).into()))
 	}
 }
@@ -288,8 +275,8 @@ impl convert::AtBoolean for Boolean {
 	///
 	/// This is simply a wrapper around [`Boolean::clone`](#method.clone).
 	#[inline]
-	fn call(this: &Object, _: Args) -> Result<Boolean> {
-		this.try_with_ref::<Self, _, !, _>(|this| Ok(this.clone()))
+	fn call(this: &Object, _: Args) -> Result<Object> {
+		this.try_with_ref::<Self, _, !, _>(|this| Ok(this.clone().into()))
 	}
 }
 
@@ -298,8 +285,8 @@ impl convert::AtNumber for Boolean {
 	///
 	/// This is simply a wrapper around [`Number::from(Boolean)`](Number#impl-From<Boolean>).
 	#[inline]
-	fn call(this: &Object, _: Args) -> Result<Number> {
-		this.try_with_ref::<Self, _, !, _>(|this| Ok(Number::from(*this)))
+	fn call(this: &Object, _: Args) -> Result<Object> {
+		this.try_with_ref::<Self, _, !, _>(|this| Ok(Number::from(*this).into()))
 	}
 }
 
@@ -308,18 +295,158 @@ impl convert::AtText for Boolean {
 	///
 	/// This is simply a wrapper around [`Text::from(Boolean)`](Number#impl-From<Boolean>).
 	#[inline]
-	fn call(this: &Object, _: Args) -> Result<Text> {
-		this.try_with_ref::<Self, _, !, _>(|bool| Ok(Text::from(*bool)))
+	fn call(this: &Object, _: Args) -> Result<Object> {
+		this.try_with_ref::<Self, _, !, _>(|bool| Ok(Text::from(*bool).into()))
 	}
 }
 
-	// /// Convert this into a [`Boolean`].
-	// ///
-	// /// This is simply a wrapper around [`Boolean::clone`](#method.clone).
-	// #[inline]
-	// pub fn qs_at_bool(this: &Object, _: Args) -> Result<Object> {
-	// 	Ok(this.clone())
-	// }
+impl operators::Not for Boolean {
+	/// Logical NOT of this.
+	#[inline]
+	fn call(this: &Object, _: Args) -> Result<Object> {
+		this.try_with_ref::<Self, _, !, _>(|this| Ok((!this.0).into()))
+	}
+}
+
+impl operators::Eql for Boolean {
+	/// See if a this is equal to the first argument.
+	///
+	/// Unlike most methods, the first argument is not implicitly converted to a  [`Boolean`] first.
+	fn call(this: &Object, args: Args) -> Result<Object> {
+		let rhs = args.arg(0)?;
+
+		if this.is_identical(rhs) {
+			Ok(true.into())
+		} else {
+			this.try_with_ref::<Self, _, !, _>(|lhs| {
+				rhs.with_ref::<Self, _, _>(|rhs| {
+					Ok((Some(lhs) == rhs).into())
+				})
+			})
+		}
+	}
+}
+
+impl operators::Cmp for Boolean {
+	/// Compares this to the first argument.
+	///
+	/// The first argument is converted to a [`Boolean`] if it isn't already.
+	fn call(this: &Object, args: Args) -> Result<Object> {
+		let rhs = args.arg(0)?;
+
+		this.try_with_ref::<Self, _, _, _>(|lhs| {
+			rhs.with_ref_call::<Self, _, !, _>(|rhs| {
+				Ok(lhs.cmp(rhs).into())
+			})
+		})
+	}
+}
+
+impl operators::BitAnd for Boolean {
+	/// Logical AND of this and the first argument.
+	///
+	/// The first argument is converted to a [`Boolean`] if it isn't already.
+	fn call(this: &Object, args: Args) -> Result<Object> {
+		let rhs = args.arg(0)?;
+		this.try_with_ref::<Self, _, _, _>(|lhs| {
+			rhs.with_ref_call::<Self, _, !, _>(|rhs| {
+				Ok((lhs.0 & rhs.0).into())
+			})
+		})
+	}
+}
+
+impl operators::BitAndAssign for Boolean {
+	/// In-place logical AND of this and the first argument.
+	///
+	/// The first argument is converted to a [`Boolean`] if it isn't already.
+	fn call(this: &Object, args: Args) -> Result<Object> {
+		let rhs = args.arg(0)?;
+		// `true & true = true, false & false = false`
+		if !this.is_identical(rhs) {
+			this.try_with_mut::<Self, _, _, _>(|lhs| {
+				rhs.with_ref_call::<Self, _, !, _>(|rhs| {
+					Ok(lhs.0 &= rhs.0)
+				})
+			})?;
+		}
+		Ok(this.clone())
+	}
+}
+
+impl operators::BitOr for Boolean {
+	/// Logical OR of this and the first argument.
+	///
+	/// The first argument is converted to a [`Boolean`] if it isn't already.
+	fn call(this: &Object, args: Args) -> Result<Object> {
+		let rhs = args.arg(0)?;
+		this.try_with_ref::<Self, _, _, _>(|lhs| {
+			rhs.with_ref_call::<Self, _, !, _>(|rhs| {
+				Ok((lhs.0 | rhs.0).into())
+			})
+		})
+	}
+}
+
+impl operators::BitOrAssign for Boolean {
+	/// In-place logical OR of this and the first argument.
+	///
+	/// The first argument is converted to a [`Boolean`] if it isn't already.
+	fn call(this: &Object, args: Args) -> Result<Object> {
+		let rhs = args.arg(0)?;
+		// `true | true = true, false | false = false`
+		if !this.is_identical(rhs) {
+			this.try_with_mut::<Self, _, _, _>(|lhs| {
+				rhs.with_ref_call::<Self, _, !, _>(|rhs| {
+					Ok(lhs.0 |= rhs.0)
+				})
+			})?;
+		}
+		Ok(this.clone())
+	}
+}
+
+impl operators::BitXor for Boolean {
+	/// Logical XOR of this and the first argument.
+	///
+	/// The first argument is converted to a [`Boolean`] if it isn't already.
+	fn call(this: &Object, args: Args) -> Result<Object> {
+		let rhs = args.arg(0)?;
+		this.try_with_ref::<Self, _, _, _>(|lhs| {
+			rhs.with_ref_call::<Self, _, !, _>(|rhs| {
+				Ok((lhs.0 ^ rhs.0).into())
+			})
+		})
+	}
+}
+
+impl operators::BitXorAssign for Boolean {
+	/// In-place logical XOR of this and the first argument.
+	///
+	/// The first argument is converted to a [`Boolean`] if it isn't already.
+	fn call(this: &Object, args: Args) -> Result<Object> {
+		let rhs = args.arg(0)?;
+		// `true ^ true = false, false ^ false = false`
+		if !this.is_identical(rhs) {
+			this.try_with_mut::<Self, _, _, _>(|lhs| {
+				rhs.with_ref_call::<Self, _, !, _>(|rhs| {
+					Ok(lhs.0 |= rhs.0)
+				})
+			})?;
+		} else {
+			this.try_with_mut::<Self, _, !, _>(|lhs| Ok(lhs.0 = false))?;
+		}
+
+		Ok(this.clone())
+	}
+}
+
+impl misc::Hash for Boolean {
+	/// The hash for this.
+	fn call(this: &Object, args: Args) -> Result<Object> {
+		unimplemented!()
+	}
+}
 
 impl_object_type!{
 for Boolean {
@@ -343,64 +470,71 @@ for Boolean {
 
 [(parents super::Basic) (convert "@bool")]:
 	"__inspect__" => function <Boolean as self::convert::Inspect>::call,
-	"@text" => function <Boolean as self::convert::AtText>::call,
-	"@num"  => function <Boolean as self::convert::AtNumber>::call,
-	"@bool" => function <Boolean as self::convert::AtBoolean>::call,
-	"=="    => function Boolean::qs_eql,
-	"!"     => method_old Boolean::qs_not,
-	"&"     => method_old Boolean::qs_bitand,
-	"&="    => function Boolean::qs_bitand_assign,
-	"|"     => method_old Boolean::qs_bitor,
-	"|="    => function Boolean::qs_bitor_assign,
-	"^"     => method_old Boolean::qs_bitxor,
-	"^="    => function Boolean::qs_bitxor_assign,
-	"<=>"   => function Boolean::qs_cmp,
-	"hash"  => method_old Boolean::qs_hash,
+	"@text"       => function <Boolean as self::convert::AtText>::call,
+	"@num"        => function <Boolean as self::convert::AtNumber>::call,
+	"@bool"       => function <Boolean as self::convert::AtBoolean>::call,
+	"=="          => function <Boolean as operators::Eql>::call,
+	"!"           => function <Boolean as operators::Not>::call,
+	"&"           => function <Boolean as operators::BitAnd>::call,
+	"&="          => function <Boolean as operators::BitAndAssign>::call,
+	"|"           => function <Boolean as operators::BitOr>::call,
+	"|="          => function <Boolean as operators::BitOrAssign>::call,
+	"^"           => function <Boolean as operators::BitXor>::call,
+	"^="          => function <Boolean as operators::BitXorAssign>::call,
+	"<=>"         => function <Boolean as operators::Cmp>::call,
+	"hash"        => function <Boolean as misc::Hash>::call,
 }
 
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use crate::attrs::convert::*;
+	use crate::attrs::{convert::*, operators::*};
+	use crate::types::ObjectType;
 
 	#[test]
 	fn at_num() {
-		assert_eq!(<Boolean as AtNumber>::call(&true.into(), args!()).unwrap(), Number::ONE);
-		assert_eq!(<Boolean as AtNumber>::call(&false.into(), args!()).unwrap(), Number::ZERO);
+		Boolean::_wait_for_setup_to_finish();
+		assert_obj_eq!(<Boolean as AtNumber>::call(&true.into(), args!()).unwrap(), Number::ONE);
+		assert_obj_eq!(<Boolean as AtNumber>::call(&false.into(), args!()).unwrap(), Number::ZERO);
 	}
 
 	#[test]
 	fn at_text() {
-		assert_eq!(<Boolean as AtText>::call(&true.into(), args!()).unwrap(), Text::from("true"));
-		assert_eq!(<Boolean as AtText>::call(&false.into(), args!()).unwrap(), Text::from("false"));
+		Boolean::_wait_for_setup_to_finish();
+		assert_obj_eq!(<Boolean as AtText>::call(&true.into(), args!()).unwrap(), Text::from("true"));
+		assert_obj_eq!(<Boolean as AtText>::call(&false.into(), args!()).unwrap(), Text::from("false"));
 	}
 
 	#[test]
 	fn at_bool() {
-		assert_eq!(<Boolean as AtBoolean>::call(&true.into(), args!()).unwrap(), Boolean::TRUE);
-		assert_eq!(<Boolean as AtBoolean>::call(&false.into(), args!()).unwrap(), Boolean::FALSE);
+		Boolean::_wait_for_setup_to_finish();
+		assert_obj_eq!(<Boolean as AtBoolean>::call(&true.into(), args!()).unwrap(), Boolean::TRUE);
+		assert_obj_eq!(<Boolean as AtBoolean>::call(&false.into(), args!()).unwrap(), Boolean::FALSE);
 	}
 
 	#[test]
 	fn eql() {
-		assert_eq!(Boolean::qs_eql(&true.into(), args!(true)).unwrap(), true);
-		assert_eq!(Boolean::qs_eql(&true.into(), args!(false)).unwrap(), false);
-		assert_eq!(Boolean::qs_eql(&false.into(), args!(true)).unwrap(), false);
-		assert_eq!(Boolean::qs_eql(&false.into(), args!(false)).unwrap(), true);
+		Boolean::_wait_for_setup_to_finish();
+		assert_obj_eq!(<Boolean as Eql>::call(&true.into(), args!(true)).unwrap(), true);
+		assert_obj_eq!(<Boolean as Eql>::call(&true.into(), args!(false)).unwrap(), false);
+		assert_obj_eq!(<Boolean as Eql>::call(&false.into(), args!(true)).unwrap(), false);
+		assert_obj_eq!(<Boolean as Eql>::call(&false.into(), args!(false)).unwrap(), true);
 	}
 
 	#[test]
 	fn not() {
-		assert_eq!(Boolean::TRUE.qs_not(args!()).unwrap(), Boolean::FALSE);
-		assert_eq!(Boolean::FALSE.qs_not(args!()).unwrap(), Boolean::TRUE);
+		Boolean::_wait_for_setup_to_finish();
+		assert_obj_eq!(<Boolean as Not>::call(&true.into(), args!()).unwrap(), Boolean::FALSE);
+		assert_obj_eq!(<Boolean as Not>::call(&false.into(), args!()).unwrap(), Boolean::TRUE);
 	}
 
 	#[test]
 	fn bitand() {
-		assert_eq!(Boolean::TRUE.qs_bitand(args!(true)).unwrap(), Boolean::TRUE);
-		assert_eq!(Boolean::TRUE.qs_bitand(args!(false)).unwrap(), Boolean::FALSE);
-		assert_eq!(Boolean::FALSE.qs_bitand(args!(true)).unwrap(), Boolean::FALSE);
-		assert_eq!(Boolean::FALSE.qs_bitand(args!(false)).unwrap(), Boolean::FALSE);
+		Boolean::_wait_for_setup_to_finish();
+		assert_obj_eq!(<Boolean as BitAnd>::call(&true.into(), args!(true)).unwrap(), Boolean::TRUE);
+		assert_obj_eq!(<Boolean as BitAnd>::call(&true.into(), args!(false)).unwrap(), Boolean::FALSE);
+		assert_obj_eq!(<Boolean as BitAnd>::call(&false.into(), args!(true)).unwrap(), Boolean::FALSE);
+		assert_obj_eq!(<Boolean as BitAnd>::call(&false.into(), args!(false)).unwrap(), Boolean::FALSE);
 	}
 
 	#[test]
@@ -409,10 +543,11 @@ mod tests {
 
 	#[test]
 	fn bitor() {
-		assert_eq!(Boolean::TRUE.qs_bitor(args!(true)).unwrap(), Boolean::TRUE);
-		assert_eq!(Boolean::TRUE.qs_bitor(args!(false)).unwrap(), Boolean::TRUE);
-		assert_eq!(Boolean::FALSE.qs_bitor(args!(true)).unwrap(), Boolean::TRUE);
-		assert_eq!(Boolean::FALSE.qs_bitor(args!(false)).unwrap(), Boolean::FALSE);
+		Boolean::_wait_for_setup_to_finish();
+		assert_obj_eq!(<Boolean as BitOr>::call(&true.into(), args!(true)).unwrap(), Boolean::TRUE);
+		assert_obj_eq!(<Boolean as BitOr>::call(&true.into(), args!(false)).unwrap(), Boolean::TRUE);
+		assert_obj_eq!(<Boolean as BitOr>::call(&false.into(), args!(true)).unwrap(), Boolean::TRUE);
+		assert_obj_eq!(<Boolean as BitOr>::call(&false.into(), args!(false)).unwrap(), Boolean::FALSE);
 	}
 
 	#[test]
@@ -421,10 +556,11 @@ mod tests {
 
 	#[test]
 	fn bitxor() {
-		assert_eq!(Boolean::TRUE.qs_bitxor(args!(true)).unwrap(), Boolean::FALSE);
-		assert_eq!(Boolean::TRUE.qs_bitxor(args!(false)).unwrap(), Boolean::TRUE);
-		assert_eq!(Boolean::FALSE.qs_bitxor(args!(true)).unwrap(), Boolean::TRUE);
-		assert_eq!(Boolean::FALSE.qs_bitxor(args!(false)).unwrap(), Boolean::FALSE);
+		Boolean::_wait_for_setup_to_finish();
+		assert_obj_eq!(<Boolean as BitXor>::call(&true.into(), args!(true)).unwrap(), Boolean::FALSE);
+		assert_obj_eq!(<Boolean as BitXor>::call(&true.into(), args!(false)).unwrap(), Boolean::TRUE);
+		assert_obj_eq!(<Boolean as BitXor>::call(&false.into(), args!(true)).unwrap(), Boolean::TRUE);
+		assert_obj_eq!(<Boolean as BitXor>::call(&false.into(), args!(false)).unwrap(), Boolean::FALSE);
 	}
 
 	#[test]

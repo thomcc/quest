@@ -6,6 +6,17 @@ macro_rules! args {
 	};
 }
 
+#[cfg(test)]
+macro_rules! assert_obj_eq {
+	($lhs:expr, $rhs:expr) => {{
+		#[allow(unused)]
+		use crate::Object;
+		let lhs = $lhs;
+		let rhs = $rhs.into();
+		assert!(lhs.eq_obj(&rhs).unwrap(), "'{:?}' != '{:?}'", lhs, rhs);
+	}};
+}
+
 
 #[cfg(test)]
 macro_rules! dummy_object {
@@ -134,7 +145,7 @@ macro_rules! impl_object_type {
 		$class.set_attr_lit($attr, $crate::types::RustFn::new(
 			concat!(stringify!($obj), "::", $attr),
 			|this, args| {
-				this.try_with_mut(|data| $val(data, args).map(Into::into).map_err(Into::into))
+				this.try_with_mut::<_, _, _, _>(|data| $val(data, args).map(Object::from).map_err(crate::Error::from))
 			}
 		));
 		impl_object_type!(@SET_ATTRS $class $obj; $($($args)*)?);

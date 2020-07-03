@@ -1,5 +1,6 @@
 #![deny(warnings)]
 #![allow(deprecated)]
+#![allow(unused)]
 #![feature(never_type)]
 extern crate rand;
 

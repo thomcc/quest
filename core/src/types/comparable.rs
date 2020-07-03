@@ -46,12 +46,20 @@ for Comparable [(parents super::Basic)]:
 }
 
 impl From<Ordering> for crate::Object {
+	#[inline]
 	fn from(ord: Ordering) -> Self {
 		match ord {
 			Ordering::Less => -1,
 			Ordering::Equal => 0,
 			Ordering::Greater => 1,
 		}.into()
+	}
+}
+
+impl From<Option<Ordering>> for crate::Object {
+	#[inline]
+	fn from(ord: Option<Ordering>) -> Self {
+		ord.map(Object::from).unwrap_or_default()
 	}
 }
 
